@@ -49,27 +49,27 @@ TARGET_POSE_X = 6.0
 # # Subscribe하는 Topic의 개수가 1개가 아닌, 그 이상의 개수가 될 경우에도 데이터를 Class 내부 변수로 저장만한다면
 # # 사용하는데는 문제가 없으나, 아래 3번 형태에 비해서 형태가 좋지 못함
 # # ================================================================
-class Turtle_Mover(object):
-    def __init__(self):
-        self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=5)
-        rospy.Subscriber("pose", Pose, self.callback)
+# class Turtle_Mover(object):
+#     def __init__(self):
+#         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=5)
+#         rospy.Subscriber("pose", Pose, self.callback)
         
-    def callback(self, _data):
-        if abs(_data.x - TARGET_POSE_X) < 0.1:
-            self.cmd_vel_pub.publish(Twist(Vector3(0, 0, 0), Vector3(0, 0, 0)))
-            rospy.loginfo("Goal Reached, Stop")
-            rospy.signal_shutdown("Goal Reached, Process Shutdown")
+#     def callback(self, _data):
+#         if abs(_data.x - TARGET_POSE_X) < 0.1:
+#             self.cmd_vel_pub.publish(Twist(Vector3(0, 0, 0), Vector3(0, 0, 0)))
+#             rospy.loginfo("Goal Reached, Stop")
+#             rospy.signal_shutdown("Goal Reached, Process Shutdown")
 
-        elif _data.x < TARGET_POSE_X:
-            self.cmd_vel_pub.publish(Twist(Vector3(0.5, 0, 0), Vector3(0, 0, 0)))
-            rospy.loginfo("Go Forward to Goal")
-        elif _data.x > TARGET_POSE_X:
-            self.cmd_vel_pub.publish(Twist(Vector3(-0.5, 0, 0), Vector3(0, 0, 0)))
-            rospy.loginfo("Go Backward to Goal")
+#         elif _data.x < TARGET_POSE_X:
+#             self.cmd_vel_pub.publish(Twist(Vector3(0.5, 0, 0), Vector3(0, 0, 0)))
+#             rospy.loginfo("Go Forward to Goal")
+#         elif _data.x > TARGET_POSE_X:
+#             self.cmd_vel_pub.publish(Twist(Vector3(-0.5, 0, 0), Vector3(0, 0, 0)))
+#             rospy.loginfo("Go Backward to Goal")
 
-new_class = Turtle_Mover()
-while not rospy.is_shutdown():
-    rospy.spin()
+# new_class = Turtle_Mover()
+# while not rospy.is_shutdown():
+#     rospy.spin()
 
 # ================================================================
 #               Class를 사용한 3번 형태 (Timer 사용 O)
