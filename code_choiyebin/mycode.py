@@ -34,18 +34,18 @@ class CrossWalkDetector:
         '''
         if self.line_num >= self.CROSS_WALK_DETECT_TH:
             try:
-                rospy.loginfo("15!!!!!!")
+
                 M = cv2.moments(_img)
                 self.x = int(M['m10']/M['m00'])
                 self.y = int(M['m01']/M['m00'])
             except:
-                rospy.loginfo("-1!!!!!!!!!")
+
                 self.x = -1
                 self.y = -1
             # print("x, y = {}, {}".format(x, y))
             return self.y
         else:
-            rospy.loginfo("-1!!!!!!")
+
             self.x = 0
             self.y = 0
             return -1
@@ -57,16 +57,16 @@ class CrossWalkDetector:
             ROI 내부 중 특정 색 영역만 검출한 이미지 (crosswalk_threshold)
             검출된 이진 이미지의 경계만 검출한 이미지 (crosswalk_edge)
         '''
-#         if not self.x <= 0 and not self.y <= 0:
-#             cv2.line(self.cropped_image, (0, self.y), (self.crop_size_x, self.y), (0, 255, 255), 20)
+        if not self.x <= 0 and not self.y <= 0:
+            cv2.line(self.cropped_image, (0, self.y), (self.crop_size_x, self.y), (0, 255, 255), 20)
 
         # cv2.circle(self.cropped_image, (self.x, self.y), 10, 255, -1)
-#         cv2.imshow("crosswalk_original", self.frame)
-#         cv2.imshow("crosswalk_cropped", self.cropped_image)
-#         cv2.imshow("crosswalk_thresholded", self.thresholded_image)
-#         cv2.imshow("crosswalk_edge", self.edge_image)
+        cv2.imshow("crosswalk_original", self.frame)
+        cv2.imshow("crosswalk_cropped", self.cropped_image)
+        cv2.imshow("crosswalk_thresholded", self.thresholded_image)
+        cv2.imshow("crosswalk_edge", self.edge_image)
 #         # cv2.imshow("lines", self.line_detect_image)
-#         cv2.waitKey(1)
+        cv2.waitKey(1)
 
     # return opencv Image type
     def imageCrop(self, _img=np.ndarray(shape=(480, 640))):
@@ -98,8 +98,8 @@ class CrossWalkDetector:
             # print("length is 0")
             self.line_num = 0
         else:
-            print("length is {}".format(len(self.lines)))
-	    print("line_num is {}".format(self.line_num))
+#             print("length is {}".format(len(self.lines)))
+# 	    print("line_num is {}".format(self.line_num))
             self.line_num = len(self.lines)
             for i in range(self.lines.shape[0]):
                 pt1 = (self.lines[i][0][0], self.lines[i][0][1])
@@ -128,12 +128,12 @@ class CrossWalkDetector:
             흰색 횡단보도 검출을 위한 Threshold 설정
             Hough Transform 기반 직선 검출을 위한 RHO, THETA, THRESHOLD 설정
         '''
-        self.WHITE_LANE_LOW = np.array([config.white_h_low, config.white_l_low, config.white_s_low])
-        self.WHITE_LANE_HIGH = np.array([config.white_h_high, config.white_l_high, config.white_s_high])
-        self.RHO = float(config.rho * 0.01)
-        self.THETA = config.theta
-        self.THRESHOLD = config.threshold
-        self.CROSS_WALK_DETECT_TH = config.crosswalk_detect_threshold
+        self.WHITE_LANE_LOW = np.array([0, 110, 0])
+        self.WHITE_LANE_HIGH = np.array([255, 255, 200])
+        self.RHO = float(1.0)
+        self.THETA = 1
+        self.THRESHOLD = 63
+        self.CROSS_WALK_DETECT_TH = 6
         return config
 
     def Image_CB(self, img):
@@ -148,9 +148,9 @@ class CrossWalkDetector:
 
                     # 횡단보도가 인식된 경우, 상태 업데이트
        if self.x > 0 and self.y > 0:
-           rospy.loginfo("Crosswalk detect!")
            current_time = rospy.Time.now().to_sec()
            if current_time - self.last_cross_time > 5.0:  # 딜레이 타임 5초
+               rospy.loginfo("Crosswalk detect!")
                self.cross_state += 1
                rospy.loginfo("Cross State Updated: {}".format(self.cross_state))
                self.cross_state_pub.publish(self.cross_state)
