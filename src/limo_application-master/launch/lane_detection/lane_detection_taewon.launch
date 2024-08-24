@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+   <node name="lane_detect" pkg="limo_application" type="lane_detect_taewon.py" output="log">
+      <param name="image_topic_name" value="/camera/rgb/image_raw/compressed"/>
+      <param name="visualization" value="True"/>
+   </node>
+   <!-- <node name="crosswalk_detect" pkg="limo_application" type="crosswalk_detect.py" output="screen">
+      <rosparam file="$(find limo_application)/params/lane_detection/crosswalk.yaml" command="load" />
+      <param name="image_topic_name" value="/camera/rgb/image_raw/compressed"/>
+      <param name="visualization" value="False"/>
+   </node> -->
+   <node name="limo_control" pkg="limo_application" type="control_taewon.py" output="screen">
+      <param name="control_topic_name" value="/cmd_vel"/>
+   </node>
+   
+    
+
+</launch> 

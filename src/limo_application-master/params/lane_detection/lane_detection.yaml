@@ -10,3 +10,10 @@ yellow_l_low:          140
 yellow_l_high:         255
 yellow_s_low:          180
 yellow_s_high:         255
+
+white_h_low:          0
+white_h_high:         255
+white_l_low:          100
+white_l_high:         255
+white_s_low:          0
+white_s_high:         255
