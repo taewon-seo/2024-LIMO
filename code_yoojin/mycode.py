@@ -107,7 +107,7 @@ class LimoController:
             차선 기준 좌표 (카메라 픽셀 좌표계 기준) (REF_X)
         '''
         self.BASE_SPEED = 0.3
-        self.LATERAL_GAIN = float(0.01)
+        self.LATERAL_GAIN = float(0.05)
         self.REF_X = 270
         self.PEDE_STOP_WIDTH = 55
         self.kd = 0.01
@@ -126,12 +126,10 @@ class LimoController:
         drive_data = Twist()
         drive_data.angular.z = self.distance_to_ref * self.LATERAL_GAIN
         
-        # 급커브 보정
-        if self.distance_to_ref > 80:
-            drive_data.angular.z = 0.3
-            
-            if self.distance_to_ref > 100 and self.distance_to_ref < 120:
-                drive_data.angular.z = -0.5
+        # # 급커브 보정
+        # if self.distance_to_ref > 80:
+        #     drive_data.angular.z = 0.8
+
         
         # # pid
         # error = self.distance_to_ref
