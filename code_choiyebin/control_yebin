@@ -47,6 +47,7 @@ class LimoController:
         rospy.Subscriber("/limo/lane_x", Int32, self.lane_x_callback)
         rospy.Subscriber("/limo/crosswalk_y", Int32, self.crosswalk_y_callback)
         rospy.Subscriber("/limo/lidar_warning", String, self.lidar_warning_callback)
+        rospy.Subscriber("/limo/cross_state", Int32, self.mission_flag_callback)
         self.drive_pub = rospy.Publisher(rospy.get_param("~control_topic_name", "/cmd_vel"), Twist, queue_size=1)
         rospy.Timer(rospy.Duration(0.03), self.drive_callback)
 
@@ -109,6 +110,12 @@ class LimoController:
             self.crosswalk_detected = True
             self.crosswalk_distance = _data.data
             self.crosswalk_flag += 1
+
+    def mission_flag_callback(self, _data):
+        self.mission_flag = _data
+        rospy.loginfo("mission_flag: {}".format(self.mission_flag))
+
+
 
 
     def reconfigure_callback(self, _config, _level):
