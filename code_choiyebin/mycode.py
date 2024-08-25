@@ -23,7 +23,7 @@ class CrossWalkDetector:
         self.distance_pub = rospy.Publisher("/limo/crosswalk_y", Int32, queue_size=5)
         self.cross_state_pub = rospy.Publisher("/limo/cross_state", Int32, queue_size=5)  # 상태 퍼블리셔 추가
         self.viz = rospy.get_param("~visualization", True)
-        self.cross_state = 0  # 횡단보도 상태 추적 변수
+        self.cross_state = 1  # 횡단보도 상태 추적 변수
         self.last_cross_time = rospy.Time.now().to_sec()  # 마지막 상태 업데이트 시간
 
     # return Int32
@@ -75,7 +75,7 @@ class CrossWalkDetector:
         '''
         self.crop_size_x = 360
         self.crop_size_y = 60
-        return _img[360:480, 120:580]
+        return _img[400:480, 240:400]
 
     # return opencv Image type
     def edgeDetect(self, _img=np.ndarray(shape=(480, 640))):
@@ -132,8 +132,8 @@ class CrossWalkDetector:
         self.WHITE_LANE_HIGH = np.array([255, 255, 200])
         self.RHO = float(1.0)
         self.THETA = 1
-        self.THRESHOLD = 63
-        self.CROSS_WALK_DETECT_TH = 6
+        self.THRESHOLD = 55
+        self.CROSS_WALK_DETECT_TH = 2
         return config
 
     def Image_CB(self, img):
@@ -146,19 +146,48 @@ class CrossWalkDetector:
        self.crosswalk_distance = self.calcCrossWalkDistance(self.thresholded_image)
        self.distance_pub.publish(self.crosswalk_distance)
 
-                    # 횡단보도가 인식된 경우, 상태 업데이트
+
+#     if self.line_num > 0:
+#         horizontal_lines = 0
+#         for line in self.lines:
+#             x1, y1, x2, y2 = line[0]
+#             angle = np.arctan2(y2 - y1, x2 - x1) * 180 / np.pi
+#             rospy.loginfo("Detected line with angle: {}".format(angle))
+#             if 80 <= abs(angle) <= 100:  # 거의 수평인 선들만 카운트
+#                 horizontal_lines += 1
+#
+#          rospy.loginfo("Number of horizontal lines:{}".format(horizontal_lines))
+#
+#
+#         if horizontal_lines > 0 and self.y > 0:
+#             current_time = rospy.Time.now().to_sec()
+#             if current_time - self.last_cross_time > 5.0:  # 딜레이 타임 5초
+#                 rospy.loginfo("Crosswalk detect!")
+#                 self.cross_state += 1
+#                 rospy.loginfo("Cross State Updated: {}".format(self.cross_state))
+#                 self.cross_state_pub.publish(self.cross_state)
+#                 self.last_cross_time = current_time
+
+       if self.cross_state == 4:
+           rospy.sleep(5)
+
+       elif self.cross_state > 6:
+           self.cross_state = 1
+
        if self.x > 0 and self.y > 0:
            current_time = rospy.Time.now().to_sec()
            if current_time - self.last_cross_time > 5.0:  # 딜레이 타임 5초
                rospy.loginfo("Crosswalk detect!")
                self.cross_state += 1
                rospy.loginfo("Cross State Updated: {}".format(self.cross_state))
+               rospy.sleep(1.5)
                self.cross_state_pub.publish(self.cross_state)
                self.last_cross_time = current_time
 
+
        # visualization
-       if self.viz:
-           self.visResult()
+        if self.viz:
+            self.visResult()
 
 
 def run():
@@ -170,3 +199,4 @@ if __name__ == '__main__':
         run()
     except KeyboardInterrupt:
         print("program down")
+
