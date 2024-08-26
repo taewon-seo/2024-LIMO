@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import rospy
+from std_msgs.msg import Int32
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import LaserScan
 import math
@@ -14,7 +15,8 @@ class Limo_wall_following:
     def __init__(self, direction):
         rospy.init_node("laser_scan_node")
         rospy.Subscriber("/scan", LaserScan, self.laser_callback)
-        self.pub = rospy.Publisher("/cmd_vel", Twist, queue_size=3)
+        rospy.Subscriber("/limo/lidar_mission_flag",Int32, self.mission_flag_callback)
+        self.pub = rospy.Publisher("/cmd_vel2", Twist, queue_size=3)
         self.cmd_vel_msg = Twist()
 
         self.condition = None
@@ -42,6 +44,10 @@ class Limo_wall_following:
         self.msg = msg
         self.is_scan = True
         print("callback")
+
+    def mission_flag_callback(self, _data):
+        self.mission_flag_3 = _data
+        self.mission_flag = 3
 
     def LiDAR_scan(self):
         print("LiDAR_scan")
