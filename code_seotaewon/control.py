@@ -40,6 +40,9 @@ class LimoController:
 
         ###### 미션 관련 변수
         self.mission_flag = 1
+
+        self.red_flag = 0
+        self.yellow_flag = 0
         
 
         srv = Server(controlConfig, self.reconfigure_callback)
@@ -49,11 +52,19 @@ class LimoController:
         rospy.Subscriber("/limo/lidar_warning", String, self.lidar_warning_callback)
 
         rospy.Subscriber("/limo/cross_state", Int32, self.mission_flag_callback)
+        rospy.Subscriber("/limo/red_flag", Int32, self.mission_flag_callback)
+
+        rospy.Subscriber("/cmd_vel_2", Twist, self.cmd_vel_2_callback)
+
 
 
 
         self.drive_pub = rospy.Publisher(rospy.get_param("~control_topic_name", "/cmd_vel"), Twist, queue_size=1)
-        
+        self.drive_pub_2 = rospy.Publisher(rospy.get_param("~control_topic_name", "/cmd_vel"), Twist, queue_size=3)
+
+        self.lidar_mission_3_flag_pub = rospy.Publisher("/limo/lidar_mission_flag", Int32, queue_size=5)
+
+
         ############# 주기 설정
         rospy.Timer(rospy.Duration(0.03), self.drive_callback)
 
@@ -103,7 +114,31 @@ class LimoController:
 
     def mission_flag_callback(self, _data):
         self.mission_flag_1 = _data
-        rospy.loginfo("mission_flag: {}".format(self.mission_flag))
+        rospy.loginfo("mission_flag_1: {}".format(self.mission_flag_1))
+
+
+    def red_flag_callback(self, _data):
+        self.red_flag = _data
+        rospy.loginfo("update mission_flag: 4 (callback)")
+
+        self.mission_flag = 4
+
+
+    def yellow_flag_callback(self, _data):
+        self.yellow_flag = _data
+        rospy.loginfo("update mission_flag: {}(callback)".format(self.yellow_flag))
+        
+        self.mission_flag = self.yellow_flag
+
+
+    def cmd_vel_2_callback(self, _data):
+        self.drive_data_2 = Twist()
+
+        if self.mission_flag == 3 or 6:  
+            
+            self.drive_data_2 = _data
+            self.drive_pub_2.publish(self.drive_data_2)
+        
 
 
 
@@ -145,13 +180,14 @@ class LimoController:
 
         drive_data = Twist()
 
-        if self.mission_flag == 1:
+        if self.mission_flag == (1 or 2):
 
-            rospy.loginfo("mission_1")
+            rospy.loginfo("mission_1 or _2")
             
             drive_data.linear.x = 0.4
             self.LATERAL_GAIN = float(0.035)
             self.REF_X = 270
+
 
             drive_data.angular.z = self.distance_to_ref * self.LATERAL_GAIN
 
@@ -165,88 +201,31 @@ class LimoController:
                 drive_data.angular.z = 0.3
 
 
-        elif self.mission_flag == 2:
+            if self.e_stop == "Warning":
 
-            rospy.loginfo("mission_2")
-            
-            drive_data.linear.x = 0.4
-            self.LATERAL_GAIN = float(0.035)
-            self.REF_X = 270
+                rospy.logwarn("Obstacle Detected, Stop!")
 
-            drive_data.angular.z = self.distance_to_ref * self.LATERAL_GAIN
+                self.mission_flag = 3
+                ## 3번으로 전환 publish
+                self.lidar_mission_3_flag_pub(1)
 
-            if self.distance_to_ref > 15:
-                drive_data.angular.z = 0.7
+                time.sleep(2)
+                
 
-            elif self.distance_to_ref == 0:
-
-                drive_data.linear.x = 0.1
-                drive_data.angular.z = 0.3
 
 
         elif self.mission_flag == 3:
             
             rospy.loginfo("mission_3")
             
+            ## 장애물 발견, cmd_vel_2 값으로 주행
+
+
+
             
-            self.LATERAL_GAIN = float(0.035)
-            self.REF_X = 270
-
-            # drive_data.angular.z = self.distance_to_ref * self.LATERAL_GAIN
-
-            drive_data.linear.x =  0.3
-            drive_data.angular.z = 0.0
-
-            ##### 장애물 발견 시 후진, 우회전 시나리오 구성
-            #     
-
-            if self.e_stop == "Warning":
-
-                rospy.logwarn("Obstacle Detected, Stop!")
-
-                ## 장애물 인식 멈춤
-                time.sleep(2)
-
-                drive_data.linear.x = -0.3
-                drive_data.angular.z = 0.0
-
-                ## 후진
-                self.pub_cmd_vel(drive_data)
-                rospy.loginfo(drive_data)
-                time.sleep(0.5)
-
-                self.pub_cmd_vel(drive_data)
-                time.sleep(0.5)
-
-                self.pub_cmd_vel(drive_data)
-                time.sleep(0.5)
-
-                ## 후진 후 멈춤
-                time.sleep(2)
-
-                ## 핸들 틀고 주행
-                drive_data.linear.x = 0.3
-                drive_data.angular.z = 1.0
-
-
-                self.pub_cmd_vel(drive_data)
-                time.sleep(0.5)
-
-                self.pub_cmd_vel(drive_data)
-                time.sleep(0.5)
-
-                drive_data.linear.x = 0.3
-                drive_data.angular.z = -1.0
-
-                self.pub_cmd_vel(drive_data)
-                time.sleep(0.5)
-
-                self.pub_cmd_vel(drive_data)
-                time.sleep(0.5)
 
                 
-                # self.my_time = rospy.Time.now().to_sec()
-                # if rospy.Time.now().to_sec() - self.my_time.to_sec() < 3.0 :
+
 
         elif self.mission_flag == 4:
 
@@ -257,9 +236,39 @@ class LimoController:
             drive_data.angular.z = self.distance_to_ref * self.LATERAL_GAIN
             if drive_data.angular.z > 0.7:
                 drive_data.angular.z = 0.7
-        
 
-        self.pub_cmd_vel(drive_data)
+
+        elif self.mission_flag == 5:
+
+            rospy.loginfo("mission_5")
+            
+            drive_data.linear.x = 0.4
+            self.LATERAL_GAIN = float(0.035)
+            self.REF_X = 270
+
+
+            drive_data.angular.z = self.distance_to_ref * self.LATERAL_GAIN
+
+            if self.distance_to_ref > 15:
+                drive_data.angular.z = 0.7
+
+
+            elif self.distance_to_ref == 0:
+
+                drive_data.linear.x = 0.1
+                drive_data.angular.z = 0.3
+
+        elif self.mission_flag == 6:
+
+            rospy.loginfo("mission_flag = 6") 
+
+            ## 직진 하는 코드
+            # 
+            ## 라이다 주행 코드 (월팔로잉)           
+
+
+        if self.mission_flag != 6 or 3:
+            self.pub_cmd_vel(drive_data)
 
 
         
@@ -276,32 +285,31 @@ class LimoController:
 
 
         ##### 리모 속도 설정 및 조향 값 퍼블리시 
+
+        #rospy.loginfo("REF{}".format(self.REF_X))
+
+        #rospy.loginfo("distance_to_ref, LATERAL_GAIN: {},{}".format(self.distance_to_ref, self.LATERAL_GAIN))
+        #rospy.loginfo("angular.z{}".format(self.distance_to_ref))
+
         try:
 
             if self.limo_mode == "diff":
                 self.drive_pub.publish(drive_data)
 
             elif self.limo_mode == "ackermann":
-
-
-                rospy.loginfo("REF{}".format(self.REF_X))
-
                 drive_data.angular.z = \
                     math.tan(drive_data.angular.z / 2) * drive_data.linear.x / self.LIMO_WHEELBASE
                 # 2를 나눈 것은 Differential과 GAIN비율을 맞추기 위함
-
-                
 
                 self.drive_pub.publish(drive_data)
 
         except Exception as e:
             rospy.logwarn(e)
-
-
     
 
 def run():
     new_class = LimoController()
+    rospy.loginfo("control start!!")
     rospy.spin()
 
 if __name__ == '__main__':
