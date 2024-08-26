@@ -52,16 +52,16 @@ class LimoController:
         rospy.Subscriber("/limo/lidar_warning", String, self.lidar_warning_callback)
 
         rospy.Subscriber("/limo/cross_state", Int32, self.mission_flag_callback)
+
         rospy.Subscriber("/limo/red_flag", Int32, self.mission_flag_callback)
 
         rospy.Subscriber("/cmd_vel_2", Twist, self.cmd_vel_2_callback)
 
 
 
-
         self.drive_pub = rospy.Publisher(rospy.get_param("~control_topic_name", "/cmd_vel"), Twist, queue_size=1)
         self.drive_pub_2 = rospy.Publisher(rospy.get_param("~control_topic_name", "/cmd_vel"), Twist, queue_size=3)
-
+        
         self.lidar_mission_3_flag_pub = rospy.Publisher("/limo/lidar_mission_flag", Int32, queue_size=5)
 
 
@@ -114,7 +114,7 @@ class LimoController:
 
     def mission_flag_callback(self, _data):
         self.mission_flag_1 = _data
-        rospy.loginfo("mission_flag_1: {}".format(self.mission_flag_1))
+        ## rospy.loginfo("mission_flag_1: {}".format(self.mission_flag_1))
 
 
     def red_flag_callback(self, _data):
@@ -220,11 +220,6 @@ class LimoController:
             
             ## 장애물 발견, cmd_vel_2 값으로 주행
 
-
-
-            
-
-                
 
 
         elif self.mission_flag == 4:
